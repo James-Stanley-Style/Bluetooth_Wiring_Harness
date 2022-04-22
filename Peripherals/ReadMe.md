@@ -1,0 +1,1 @@
+This folder holds four Python codes, one for each of the peripheral units: Speedometer, Accelerometer (Gear), Engine RPM, and Coolant Temperature. These four systems operate on Raspberry Pi Zero W / W 2 units. Each segment of code should be loaded on to one Raspberry Pi with the appropriate sensor hardware. 
