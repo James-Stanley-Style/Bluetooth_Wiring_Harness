@@ -204,6 +204,13 @@ def gaugeGear(x,y):
     gameDisplay.blit(gearGaugeImg, (x, y))
 
 def rpmCompare(RPM,count):
+	'''
+	Function: rpmCompare()
+        Inputs: RPM - Float representing engine RPM
+		count - Int representing number of images for each gauge
+        Outputs: rpmSelection - Int representing selected image
+        Usage: This function compares the current value of the sensor to the Gauge images and selects the proper image
+	'''
     rpmSlice = (6400-0) / count
     if RPM is None or RPM == 0 :
         rpmSelection = 0
@@ -214,6 +221,13 @@ def rpmCompare(RPM,count):
     return int(round(rpmSelection,0))
 
 def mphCompare(MPH,count):
+	'''
+	Function: rpmCompare()
+        Inputs: MPH - Float representing vehicle
+		count - Int representing number of images for each gauge
+        Outputs: mphSelection - Int representing selected image
+        Usage: This function compares the current value of the sensor to the Gauge images and selects the proper image
+	'''
     mphSlice = (160-0) / count
     if MPH == 0:
         mphSelection = 0
@@ -225,6 +239,13 @@ def mphCompare(MPH,count):
     return int(round(mphSelection,0))
 
 def coolantCompare(Temp,count):
+	'''
+	Function: coolantCompare()
+        Inputs: Temp - Float representing engine coolant temperature
+		count - Int representing number of images for each gauge
+        Outputs: coolantSelection - Int representing selected image
+        Usage: This function compares the current value of the sensor to the Gauge images and selects the proper image
+	'''
     #print(Temp)
     Temp = Temp
     coolantSlice = (120-60) / count
@@ -239,10 +260,23 @@ def coolantCompare(Temp,count):
     return int(round(coolantSelection,0))
 
 def gearCompare(Gear,count):
+	'''
+	Function: gearCompare()
+        Inputs: Gear - Float representing transmission gear
+		count - Int representing number of images for each gauge
+        Outputs: gearSelection - Int representing selected image
+        Usage: This function compares the current value of the sensor to the Gauge images and selects the proper image
+	'''
     gearSelection = Gear
     return int(round(gearSelection,0))
 
 def fadeSplashOut():
+	'''
+	Function: fadeSplashOut()
+        Inputs: None
+        Outputs: None
+        Usage: This function fades out the Splash Screen to make a nice transition to the main screen
+	'''
     clock.tick(60)
     time.sleep(2)
     for i in range(100,0,-5):
@@ -255,6 +289,17 @@ def fadeSplashOut():
         #print("HERE")
 
 def imagePreload(rpmCount,mphCount,coolantCount,gearCount):
+	'''
+	Function: imagePreload()
+        Inputs: rpmCount - Int representing number of RPM gauge images to choose from
+		mphCount - Int representing number of MPH gauge images to choose from
+		coolantCount - Int representing number of Coolant gauge images to choose from
+		gearCount - Int representing number of Gear gauge images to choose from
+        Outputs: ImageList - List of Dictionaries with all appropriate images preloaded
+        Usage: This function preloads all images so they can be used in the main loop
+		Without this function, the code ran at about 15 fps,
+		With this function, we trade about 5 seconds of load in time for closer to 60 fps 
+	'''
     rpmDict = {}
     mphDict = {}
     coolantDict = {}
@@ -278,6 +323,7 @@ def imagePreload(rpmCount,mphCount,coolantCount,gearCount):
 
 
 if __name__ == '__main__':
+	#Main Loop
     pygame.init()
     display_width =1024
     display_height = 600
@@ -292,7 +338,7 @@ if __name__ == '__main__':
     gearData = 0
 
     gameDisplay = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
-    #gameDisplay = pygame.display.set_mode((display_width,display_height))
+    #gameDisplay = pygame.display.set_mode((display_width,display_height)) #This can be used when not desiring full screen
     pygame.display.set_caption('Gauge Cluster')
     splashScreen = pygame.image.load('/home/pi/bluetoothHarness/bluetooth-harness-main/Gauges/Splash/Splash_100.png')
     splashScreen = pygame.transform.scale(splashScreen,(display_width,display_height))
@@ -311,8 +357,9 @@ if __name__ == '__main__':
     #gameDisplay
 
     hostMACAddress = 'E4:5F:01:89:A3:A2'
+	#Preload all images
     imageList = imagePreload(95,88,19,6)
-
+	#Initialize all socket connections
     serverConnectionDict = setupSocketThreads(hostMACAddress,4)
     fadeThread = threading.Thread(target=fadeSplashOut)
     fadeThread.run()
@@ -320,27 +367,24 @@ if __name__ == '__main__':
 
 
     #print("HELLO")
-    
+    # Define threads for each socket call so they can be called asynchronously
     GPSThread = threading.Thread(target=socketThread, args=(serverConnectionDict[0], 0, 0))
     rpmThread = threading.Thread(target=socketThread,args=(serverConnectionDict[1],1,0))
     tempThread = threading.Thread(target=socketThread, args=(serverConnectionDict[2], 2, 0))
     gearThread = threading.Thread(target=socketThread,args=(serverConnectionDict[3],3,0))
-
-    '''
-    tempThread = threading.Thread(target=socketThread, args=(serverConnectionDict[1], 1, 0))
-    gearThread = threading.Thread(target=socketThread,args=(serverConnectionDict[2],2,0))
-    rpmThread = threading.Thread(target=socketThread,args=(serverConnectionDict[3],3,0))
-    '''
+	#Keep track of start time
     startTime = time.time()
     try:
 
         while not crashed:
+		#Redefine threads with every loop
             GPSThread = threading.Thread(target=socketThread, args=(serverConnectionDict[0], 0, 0))
             rpmThread = threading.Thread(target=socketThread,args=(serverConnectionDict[1],1,0))
             tempThread = threading.Thread(target=socketThread,args=(serverConnectionDict[2],2,0))
             gearThread = threading.Thread(target=socketThread,args=(serverConnectionDict[3],3,0))
 
             A = time.time()
+	#Define PyGame conditions, including how a user could exit (esc key)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     crashed = True
@@ -376,26 +420,8 @@ if __name__ == '__main__':
             if tempData is not None:
                 coolantTemp = socketParse(tempData)
             else:
-                tempData = 86
-            '''
-            tempThread.run()
-            gearThread.run()
-            rpmThread.run()
-            
-            # print(X)
-            if tempData is not None:
-                coolantTemp = socketParse(tempData) *2
-            else:
-                tempData = 86
-            if gearThread is not None:
-                Gear = round(socketParse(gearData),0)
-            else:
-                Gear = 0
-            if rpmThread is not None:
-                RPM = round(socketParse(rpmData),0)
-            else:
-                RPM = 2000
-            '''
+                coolantTemp = 86
+	    # Randomize for testing
             #coolantTemp = 85 + 25 * random.random()
             #print(coolantTemp)
             #MPH = 80 + 25 * random.random()
@@ -406,15 +432,17 @@ if __name__ == '__main__':
             coolantImage = coolantCompare(coolantTemp,19)
             gearImage = gearCompare(Gear,6)
 
-
+	    #Load in the images from preloaded list
             rpmGaugeImg = imageList[0][rpmImage]
             speedoGaugeImg = imageList[1][mphImage]
             tempGaugeImg = imageList[2][coolantImage]
             gearGaugeImg = imageList[3][gearImage]
+	    #Place the gauges as appropriate
             gaugeTemp(x + 380, y + 0)
             gaugeGear(x + 525, y + 275)
             gaugeRPM(x+600, y+25)
             gaugeMPH(x-20,y+25)
+	    #Update display and loop
             pygame.display.update()
             clock.tick(45)
             #print(time.time() - A)
@@ -424,5 +452,7 @@ if __name__ == '__main__':
     finally:
 	
         #call("sudo shutdown -h now", shell=True)
+	# NOTE: The Raspberry Pi 4 Hub used a physical On/Off switch for safe shutdown through the GPIO
+	# NOTE: This safe shutdown procedure made it unnecessary for the code to have a shutdown option.
         pass
  
