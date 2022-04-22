@@ -1,1 +1,2 @@
 This folder contains the Gauge images that the Python code will pull from for the Pygame library. This folder location defaults to /home/pi/bluetoothHarness/bluetooth-harness-main/Gauges/ . If you want to place the file elsewhere, make sure to change the location in the main.py file.
+NOTE: The files are sized to the ideal size for a 7" screen. This was used for prototype testing. If a larger or smaller screen is desired, it would be helpful to adjust the size of the images accordingly
