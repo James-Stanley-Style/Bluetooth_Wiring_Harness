@@ -1,3 +1,9 @@
+## Code developed for MAE 586 by James Stanley
+## NC State Graduate School - Mechanical Engineering Department
+## NCSU Project Work In Engineering
+## Bluetooth Wiring Harness - Hub System
+## Requires no additional hardware
+
 import pygame
 import random
 import socket
@@ -8,6 +14,17 @@ from threading import Timer
 from subprocess import call
 
 def setupSocketThreads(MACAddress, numSockets):
+	'''
+	 	Function: setuptSocketThreads()
+        	Inputs: MACAddress - String containing Hub Mac Address
+			numSockets - Int representing the desired number of sockets to create
+				     - Max for Raspberry Pi 4B is 8 bluetooth connections (assuming none outstanding)
+        	Outputs: server - Dictionary of numSockets length used to handle the socket swapping. 
+				  Dictionary contains Connection information - Socket Number, Client, Address
+        	Usage: Set up sockets at the start of the code to initialize the connection. 
+			This prevents dropout due to connections not existing
+	'''
+	
     if numSockets > 4:
         print("Too Many Sockets!")
         quitCondition = True
@@ -16,12 +33,14 @@ def setupSocketThreads(MACAddress, numSockets):
     server = {}
     backlog = numSockets
     socketImage = []
+    # Prep socket Connection image, one for each socket
     socketImage.append(pygame.image.load('/home/pi/bluetoothHarness/bluetooth-harness-main/Gauges/Connections/speedometer.png'))
     socketImage.append(pygame.image.load('/home/pi/bluetoothHarness/bluetooth-harness-main/Gauges/Connections/tachometer.png'))
     socketImage.append(pygame.image.load('/home/pi/bluetoothHarness/bluetooth-harness-main/Gauges/Connections/coolant.png'))
     socketImage.append(pygame.image.load('/home/pi/bluetoothHarness/bluetooth-harness-main/Gauges/Connections/gear.png'))
     size = 32
     for i in range(0, numSockets):
+	#Loop operates on Ports 25+ to avoid any restricted ports 
         ports[i] = 25 + i
         sockets[i] = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
         # sockets[i].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -32,6 +51,8 @@ def setupSocketThreads(MACAddress, numSockets):
 
         client, address = sockets[i].accept()
         print("Socket " + str(i) + "  Accepted")
+	# Each time a connection is made, the representative connection image should flash on screen
+	# This ensures the user is able to understand how things are initializing
         gameDisplay.blit(socketImage[i], (50, 100 + i*100))
         server[i] = [sockets[i], client, address]
         pygame.display.update()
@@ -41,6 +62,15 @@ def setupSocketThreads(MACAddress, numSockets):
 
 
 def socketThread(server, socketNum, StartTime):
+	'''
+	 Function: socketThread()
+        Inputs: server - Server Dictionary for specificed socket, containing necessary socket information
+	 	socketNum - Int, Socket count (Max = numSocket)
+		StartTime - Time type object
+        Outputs: None
+        Usage: Uses globals to update the current data for each gauge.
+		Handles all gauges seperately so it can be run as a thread
+	'''
     # print("Socket " ,socketNum, "is running")
     global gpsData
     global tempData
@@ -113,6 +143,14 @@ def socketThread(server, socketNum, StartTime):
 
 
 def socketParse(data):
+	'''
+	 Function: socketParse()
+        Inputs: data - String or Bytes Type
+        Outputs: parsedData - Float type data representing the usable result from the sockets
+        Usage: Used to remove the trailing slashes and new line indicators from a socket packet
+		These were included to ensure all sockets pass 8 bytes of data, and must be removed
+		prior to utilization
+	'''
     if data is not None and type(data) is not int:
         if "////n" in data:
             parsedData = float(data.replace("b'", '').replace("////n'", ''))
@@ -130,15 +168,39 @@ def socketParse(data):
         return 0.0
 
 def gaugeRPM(x, y):
+	'''
+	 Function: gaugeRPM()
+        Inputs: x,y - Int type values representing gauge location
+        Outputs: None
+        Usage: Updates specified gauge with new data
+	'''
     gameDisplay.blit(rpmGaugeImg, (x, y))
 
 def gaugeMPH(x, y):
+	'''
+	 Function: gaugeMPH()
+        Inputs: x,y - Int type values representing gauge location
+        Outputs: None
+        Usage: Updates specified gauge with new data
+	'''
     gameDisplay.blit(speedoGaugeImg, (x, y))
 
 def gaugeTemp(x,y):
+	'''
+	 Function: gaugeTemp()
+        Inputs: x,y - Int type values representing gauge location
+        Outputs: None
+        Usage: Updates specified gauge with new data
+	'''
     gameDisplay.blit(tempGaugeImg, (x, y))
 
 def gaugeGear(x,y):
+	'''
+	 Function: gaugeGear()
+        Inputs: x,y - Int type values representing gauge location
+        Outputs: None
+        Usage: Updates specified gauge with new data
+	'''
     gameDisplay.blit(gearGaugeImg, (x, y))
 
 def rpmCompare(RPM,count):
