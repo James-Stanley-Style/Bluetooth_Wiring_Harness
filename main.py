@@ -2,7 +2,8 @@
 ## NC State Graduate School - Mechanical Engineering Department
 ## NCSU Project Work In Engineering
 ## Bluetooth Wiring Harness - Hub System
-## Requires no additional hardware
+## Requires no additional hardware but assumes a 4-Core model is being used.
+## Single Core options may fail to thread properly.
 
 import pygame
 import random
